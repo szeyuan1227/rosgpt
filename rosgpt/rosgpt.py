@@ -218,12 +218,12 @@ class ROSGPTProxy(Resource):
         print ('[ROSGPT] Command received. ', text_command, '. Asking ChatGPT ...')
         # Run the speak function on a separate thread
         #print('text_command:', text_command,'\n')
-        threading.Thread(target=speak, args=(text_command+"Message received. Now consulting ChatGPT for a response.",)).start()
+        # threading.Thread(target=speak, args=(text_command+"Message received. Now consulting ChatGPT for a response.",)).start()
         chatgpt_response = self.askGPT(text_command)
         print ('[ROSGPT] Response received from ChatGPT. \n', str(json.loads(chatgpt_response))[:60], '...')
         #print('eval(chatgpt_response)', eval(chatgpt_response))
         # Run the speak function on a separate thread
-        threading.Thread(target=speak, args=("We have received a response from ChatGPT.",)).start()
+        # threading.Thread(target=speak, args=("We have received a response from ChatGPT.",)).start()
 
         if chatgpt_response is None:
             return {'error': 'An error occurred while processing the request'}

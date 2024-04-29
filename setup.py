@@ -31,7 +31,7 @@ setup(
     entry_points={
         'console_scripts': [
             'rosgpt = rosgpt.rosgpt:main',
-            'rosgptparser_turtlesim = rosgpt.rosgptparser_turtlesim:main',
+            'rosgptparser_chatgpt_controller = rosgpt.rosgptparser_chatgpt_controller:main',
             'rosgpt_client_node = rosgpt.rosgpt_client_node:main',
         ],
     },

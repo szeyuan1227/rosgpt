@@ -15,22 +15,24 @@ import copy
 import math
 import rclpy 
 from rclpy.node import Node
-from geometry_msgs.msg import Twist 
+from geometry_msgs.msg import TwistStamped
 from turtlesim.msg import Pose
 import time
 from rclpy.executors import SingleThreadedExecutor
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+# import time
 
 
 
-class TurtlesimController(Node):
+class ChatgptController(Node):
 
     def __init__(self):
-        super().__init__('turtlesim_controller')
+        super().__init__('chatgpt_controller')
         self.create_subscription(String,'/voice_cmd',self.voice_cmd_callback,10)
-        self.velocity_publisher = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
+        # self.velocity_publisher = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
+        self.velocity_publisher = self.create_publisher(TwistStamped, '/cmd_vel', 10)
         self.pose_subscriber = self.create_subscription(Pose, "/turtle1/pose", self.pose_callback, 10)
         self.x = 0.0
         self.y  = 0.0
@@ -42,7 +44,7 @@ class TurtlesimController(Node):
         self.move_executor = SingleThreadedExecutor()
         move_thread = threading.Thread(target=self.move_executor.spin)
         move_thread.start()
-        print('ROSGPT Turtlesim Controller Started. Waiting for input commands ...')
+        print('ROSGPT Controller Started. Waiting for input commands ...')
 
         
     
@@ -99,24 +101,36 @@ class TurtlesimController(Node):
     def get_distance(self,start, destination):
         return math.sqrt(((destination.x-start.x)**2 + (destination.y-start.y)**2))
     
+    # def timer(duration):
+    #     time.sleep(duration)
+    #     twist_msg.twist.linear.x = 0
+    #     twist_msg.twist.linear.y = 0
+    #     twist_msg.twist.linear.z = 0
+    #     twist_msg.twist.angular.z = 0
+
+
     def move(self, linear_speed, distance, is_forward): 
         if is_forward:
             direction = 'forward'
         else:
             direction = 'backward'
         print('Start moving the robot ', direction, ' at ', linear_speed, 'm/s and for a distance ', distance, 'meter')
-        twist_msg = Twist()
+        twist_msg = TwistStamped()
+        twist_msg.header.stamp.sec = 0
+        twist_msg.header.stamp.nanosec = 0
+        twist_msg.header.frame_id = 'twist'       
 
         if (linear_speed > 1.0):
             print('[ERROR]: The speed must be lower than 1.0!')
             return -1
 
-        twist_msg.linear.x = float(abs(linear_speed) if is_forward else -abs(linear_speed))
-        twist_msg.linear.x = float(abs(linear_speed) * (1 if is_forward else -1))
+        twist_msg.twist.linear.x = float(abs(linear_speed) if is_forward else -abs(linear_speed))
+        twist_msg.twist.linear.x = float(abs(linear_speed) * (1 if is_forward else -1))
 
         start_pose = copy.copy(self.pose)
 
         #self.move_executor.add_node(self)#
+        # timer(5)
 
         while self.get_distance(start_pose, self.pose) < distance:
             #print('start_pose', start_pose, 'self.pose', self.pose, 'moved_distance: ', self.get_distance(start_pose, self.pose))
@@ -125,7 +139,8 @@ class TurtlesimController(Node):
             self.velocity_publisher.publish(twist_msg)
             self.move_executor.spin_once(timeout_sec=0.1)
 
-        twist_msg.linear.x = 0.0
+        twist_msg.twist.linear.x = 0.0
+
         self.velocity_publisher.publish(twist_msg)
         print('distance moved: ', self.get_distance(start_pose, self.pose))
         print('The Robot has stopped...')
@@ -140,7 +155,10 @@ class TurtlesimController(Node):
     def rotate (self, angular_speed_degree, desired_relative_angle_degree, clockwise):
         print('Start Rotating the Robot ...')
         #rclpy.spin_once(self)
-        twist_msg=Twist()
+        twist_msg=TwistStamped()
+        twist_msg.header.stamp.sec = 0
+        twist_msg.header.stamp.nanosec = 0
+        twist_msg.header.frame_id = 'twist'
         angular_speed_degree=abs(angular_speed_degree) #make sure it is a positive relative angle
         if (angular_speed_degree>30) :
             print (angular_speed_degree)
@@ -148,8 +166,8 @@ class TurtlesimController(Node):
             return -1
         
         angular_speed_radians = math.radians(angular_speed_degree)
-        twist_msg.angular.z = -abs(angular_speed_radians) if clockwise else abs(angular_speed_radians)
-        twist_msg.angular.z = abs(angular_speed_radians) * (-1 if clockwise else 1)
+        twist_msg.twist.angular.z = -abs(angular_speed_radians) if clockwise else abs(angular_speed_radians)
+        twist_msg.twist.angular.z = abs(angular_speed_radians) * (-1 if clockwise else 1)
 
         start_pose = copy.copy(self.pose)
         
@@ -167,7 +185,7 @@ class TurtlesimController(Node):
             #rclpy.spin_once(self)
             time.sleep(0.01)
         #print ('rotated_related_angle_degree', rotated_related_angle_degree, 'desired_relative_angle_degree', desired_relative_angle_degree)
-        twist_msg.angular.z = 0.0
+        twist_msg.twist.angular.z = 0.0
         self.velocity_publisher.publish(twist_msg)
         print('The Robot has stopped...')
 
@@ -176,7 +194,7 @@ class TurtlesimController(Node):
     
 def main(args=None):
     rclpy.init(args=args)
-    node = TurtlesimController()
+    node = ChatgptController()
     rclpy.spin(node)
     rclpy.shutdown()
 

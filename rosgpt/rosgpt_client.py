@@ -47,6 +47,6 @@ if __name__ == '__main__':
     to the console.
     """
     while True:
-        print('Enter a move command or a rotate command. The current ROSGPTParser of rosgpt_turtlesim does not multiple command. Will be extended later')
+        print('Enter a move command or a rotate command.')
         text_command = input("Enter a text command: ")
         send_text_command(text_command)
